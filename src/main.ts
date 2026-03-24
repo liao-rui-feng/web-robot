@@ -52,7 +52,7 @@ import "tippy.js/themes/light.css";
 import VueTippy from "vue-tippy";
 app.use(VueTippy);
 
-getPlatformConfig(app).then(async config => {
+const bootstrap = async (config: PlatformConfigs = {}) => {
   setupStore(app);
   app.use(router);
   await router.isReady();
@@ -61,4 +61,8 @@ getPlatformConfig(app).then(async config => {
   // .use(PureDescriptions)
   // .use(useEcharts);
   app.mount("#app");
-});
+};
+
+getPlatformConfig(app)
+  .then(config => bootstrap((config ?? {}) as PlatformConfigs))
+  .catch(() => bootstrap({}));
