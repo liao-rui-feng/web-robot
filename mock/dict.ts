@@ -18,6 +18,8 @@ type DictItemRecord = {
   value: string;
   sort: number;
   status: 0 | 1;
+  isDefault?: boolean;
+  colorTag?: string;
   remark?: string;
   createTime: number;
 };
@@ -55,6 +57,8 @@ let dictItemData: DictItemRecord[] = [
     value: "multi_joint_industrial",
     sort: 1,
     status: 1,
+    isDefault: true,
+    colorTag: "#409EFF",
     remark: "内置字典",
     createTime: seedTime
   },
@@ -65,6 +69,7 @@ let dictItemData: DictItemRecord[] = [
     value: "collaborative",
     sort: 2,
     status: 1,
+    colorTag: "#67C23A",
     remark: "内置字典",
     createTime: seedTime
   },
@@ -75,6 +80,7 @@ let dictItemData: DictItemRecord[] = [
     value: "logistics",
     sort: 3,
     status: 1,
+    colorTag: "#E6A23C",
     remark: "内置字典",
     createTime: seedTime
   },
@@ -85,6 +91,7 @@ let dictItemData: DictItemRecord[] = [
     value: "composite",
     sort: 4,
     status: 1,
+    colorTag: "#909399",
     remark: "内置字典",
     createTime: seedTime
   },
@@ -95,6 +102,8 @@ let dictItemData: DictItemRecord[] = [
     value: "research",
     sort: 1,
     status: 1,
+    isDefault: true,
+    colorTag: "#409EFF",
     remark: "内置字典",
     createTime: seedTime
   },
@@ -105,6 +114,7 @@ let dictItemData: DictItemRecord[] = [
     value: "use",
     sort: 2,
     status: 1,
+    colorTag: "#67C23A",
     remark: "内置字典",
     createTime: seedTime
   },
@@ -115,6 +125,7 @@ let dictItemData: DictItemRecord[] = [
     value: "maintenance",
     sort: 3,
     status: 1,
+    colorTag: "#E6A23C",
     remark: "内置字典",
     createTime: seedTime
   },
@@ -125,6 +136,7 @@ let dictItemData: DictItemRecord[] = [
     value: "scrap_terminal",
     sort: 4,
     status: 1,
+    colorTag: "#F56C6C",
     remark: "内置字典",
     createTime: seedTime
   }
@@ -171,7 +183,12 @@ function buildDictOptions(dictType: string) {
   return [...dictItemData]
     .filter(item => item.dictType === dictType && item.status === 1)
     .sort(itemSorter)
-    .map(item => ({ label: item.label, value: item.value }));
+    .map(item => ({
+      label: item.label,
+      value: item.value,
+      isDefault: item.isDefault ?? false,
+      colorTag: item.colorTag ?? ""
+    }));
 }
 
 export default defineFakeRoute([
@@ -360,6 +377,8 @@ export default defineFakeRoute([
       const value = String(body?.value ?? "").trim();
       const sort = Number(body?.sort) > 0 ? Number(body.sort) : 1;
       const status = normalizeStatus(body?.status) ?? 1;
+      const isDefault = status === 0 ? false : Boolean(body?.isDefault);
+      const colorTag = String(body?.colorTag ?? "").trim();
       const remark = String(body?.remark ?? "");
 
       if (!dictType) {
@@ -393,7 +412,17 @@ export default defineFakeRoute([
         target.value = value;
         target.sort = sort;
         target.status = status;
+        target.isDefault = isDefault;
+        target.colorTag = colorTag;
         target.remark = remark;
+
+        if (target.isDefault) {
+          dictItemData = dictItemData.map(item =>
+            item.dictType === target.dictType && item.id !== target.id
+              ? { ...item, isDefault: false }
+              : item
+          );
+        }
 
         return {
           code: 0,
@@ -409,10 +438,20 @@ export default defineFakeRoute([
         value,
         sort,
         status,
+        isDefault,
+        colorTag,
         remark,
         createTime: Date.now()
       };
       dictItemData.push(newItem);
+
+      if (newItem.isDefault) {
+        dictItemData = dictItemData.map(item =>
+          item.dictType === newItem.dictType && item.id !== newItem.id
+            ? { ...item, isDefault: false }
+            : item
+        );
+      }
 
       return {
         code: 0,
@@ -441,15 +480,27 @@ export default defineFakeRoute([
   },
   {
     url: "/dict-options",
-    method: "get",
-    response: () => {
+    method: "post",
+    response: ({ body }) => {
+      const requested = Array.isArray(body?.dictTypes)
+        ? body.dictTypes
+            .map(item => String(item ?? "").trim())
+            .filter(Boolean)
+        : [];
+      const enabledTypes = [...dictTypeData]
+        .filter(item => item.status === 1)
+        .sort(typeSorter)
+        .map(item => item.dictType);
+      const targetTypes = requested.length ? requested : enabledTypes;
+
+      const result = Object.fromEntries(
+        targetTypes.map(dictType => [dictType, buildDictOptions(dictType)])
+      );
+
       return {
         code: 0,
         message: "success",
-        data: {
-          robotTypeOptions: buildDictOptions("robot_type"),
-          robotStageOptions: buildDictOptions("robot_stage")
-        }
+        data: result
       };
     }
   }

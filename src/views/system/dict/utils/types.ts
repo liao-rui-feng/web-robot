@@ -40,6 +40,8 @@ export interface DictItemProps {
   value: string;
   sort: number;
   status: 0 | 1;
+  isDefault?: boolean;
+  colorTag?: string;
   remark?: string;
 }
 

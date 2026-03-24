@@ -79,8 +79,8 @@ export const deleteDictItem = (data?: object) => {
   return http.request<ResultAny>("post", "/dict-delete", { data });
 };
 
-export const getDictOptions = () => {
-  return http.request<ResultAny>("get", "/dict-options");
+export const getDictOptions = (data?: { dictTypes?: string[] }) => {
+  return http.request<ResultAny>("post", "/dict-options", { data });
 };
 
 

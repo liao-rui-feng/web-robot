@@ -8,6 +8,15 @@ const statusOptions = [
   { label: "停用", value: 0 }
 ];
 
+const colorTagOptions = [
+  { label: "默认", value: "" },
+  { label: "蓝色", value: "#409EFF" },
+  { label: "绿色", value: "#67C23A" },
+  { label: "橙色", value: "#E6A23C" },
+  { label: "红色", value: "#F56C6C" },
+  { label: "灰色", value: "#909399" }
+];
+
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
     dictType: "robot_type",
@@ -15,6 +24,8 @@ const props = withDefaults(defineProps<FormProps>(), {
     value: "",
     sort: 1,
     status: 1,
+    isDefault: false,
+    colorTag: "",
     remark: ""
   }),
   mode: "add",
@@ -107,6 +118,26 @@ defineExpose({ getRef });
         <el-option
           v-for="item in statusOptions"
           :key="item.value"
+          :label="item.label"
+          :value="item.value"
+        />
+      </el-select>
+    </el-form-item>
+
+    <el-form-item label="默认项">
+      <el-switch v-model="newFormInline.isDefault" :disabled="isDetail" />
+    </el-form-item>
+
+    <el-form-item label="标签色">
+      <el-select
+        v-model="newFormInline.colorTag"
+        class="w-full"
+        placeholder="请选择标签色"
+        :disabled="isDetail"
+      >
+        <el-option
+          v-for="item in colorTagOptions"
+          :key="item.label"
           :label="item.label"
           :value="item.value"
         />

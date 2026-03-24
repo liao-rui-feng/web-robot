@@ -15,7 +15,6 @@ import {
 import type {
   DictItemProps,
   DictOption,
-  DictTreeNode,
   DictType,
   DictTypeEntity
 } from "./types";
@@ -39,6 +38,8 @@ const defaultFormInline: DictItemProps = {
   value: "",
   sort: 1,
   status: 1,
+  isDefault: false,
+  colorTag: "",
   remark: ""
 };
 
@@ -50,41 +51,6 @@ type DictRow = DictItemProps & {
 
 const typeSorter = (a: DictTypeEntity, b: DictTypeEntity) =>
   a.sort - b.sort || (a.id ?? 0) - (b.id ?? 0);
-
-const itemSorter = (a: DictRow, b: DictRow) => a.sort - b.sort || a.id - b.id;
-
-function buildDictTree(dictTypes: DictTypeEntity[], allItems: DictRow[]) {
-  const grouped = new Map<string, DictRow[]>();
-  allItems.forEach(item => {
-    const current = grouped.get(item.dictType) ?? [];
-    current.push(item);
-    grouped.set(item.dictType, current);
-  });
-
-  return [...dictTypes].sort(typeSorter).map<DictTreeNode>(typeItem => {
-    const children = [...(grouped.get(typeItem.dictType) ?? [])]
-      .sort(itemSorter)
-      .map<DictTreeNode>(dictItem => ({
-        id: `item:${typeItem.dictType}:${dictItem.id}`,
-        label: dictItem.label,
-        nodeType: "item",
-        dictType: dictItem.dictType,
-        value: dictItem.value,
-        status: dictItem.status
-      }));
-
-    return {
-      id: `type:${typeItem.dictType}`,
-      label: typeItem.name,
-      nodeType: "type",
-      dictType: typeItem.dictType,
-      count: children.length,
-      status: typeItem.status,
-      builtin: typeItem.builtin,
-      children
-    };
-  });
-}
 
 export function useDict(_tableRef: Ref) {
   const form = reactive({
@@ -101,13 +67,6 @@ export function useDict(_tableRef: Ref) {
   const dictTypeList = ref<DictTypeEntity[]>([]);
   const allDictItemList = ref<DictRow[]>([]);
   const activeDictType = ref<DictType>("robot_type");
-  const activeTreeNodeKey = ref(`type:${activeDictType.value}`);
-  const dictTreeData = ref<DictTreeNode[]>([]);
-
-  const treeProps = {
-    label: "label",
-    children: "children"
-  };
 
   const activeDictTypeInfo = computed(() =>
     dictTypeList.value.find(item => item.dictType === activeDictType.value)
@@ -125,6 +84,20 @@ export function useDict(_tableRef: Ref) {
         value: item.dictType as DictType
       }))
   );
+
+  const dictTypeCards = computed(() => {
+    const countMap = new Map<string, number>();
+    allDictItemList.value.forEach(item => {
+      countMap.set(item.dictType, (countMap.get(item.dictType) ?? 0) + 1);
+    });
+
+    return [...dictTypeList.value]
+      .sort(typeSorter)
+      .map(item => ({
+        ...item,
+        count: countMap.get(item.dictType) ?? 0
+      }));
+  });
 
   const pagination = reactive<PaginationProps>({
     total: 0,
@@ -156,6 +129,19 @@ export function useDict(_tableRef: Ref) {
       width: 90
     },
     {
+      label: "默认项",
+      prop: "isDefault",
+      width: 90,
+      cellRenderer: scope =>
+        scope.row.isDefault ? (
+          <el-tag size={scope.props.size} type="warning">
+            默认
+          </el-tag>
+        ) : (
+          "-"
+        )
+    },
+    {
       label: "状态",
       prop: "status",
       width: 100,
@@ -164,6 +150,26 @@ export function useDict(_tableRef: Ref) {
           {statusLabelMap[scope.row.status]}
         </el-tag>
       )
+    },
+    {
+      label: "标签色",
+      prop: "colorTag",
+      width: 110,
+      cellRenderer: scope =>
+        scope.row.colorTag ? (
+          <el-tag
+            size={scope.props.size}
+            style={{
+              color: scope.row.colorTag,
+              borderColor: scope.row.colorTag,
+              backgroundColor: `${scope.row.colorTag}1A`
+            }}
+          >
+            色签
+          </el-tag>
+        ) : (
+          "-"
+        )
     },
     {
       label: "备注",
@@ -195,7 +201,6 @@ export function useDict(_tableRef: Ref) {
   function syncActiveType() {
     if (!dictTypeList.value.length) {
       activeDictType.value = "";
-      activeTreeNodeKey.value = "";
       return;
     }
 
@@ -204,16 +209,10 @@ export function useDict(_tableRef: Ref) {
     );
     if (!currentExists) {
       activeDictType.value = [...dictTypeList.value].sort(typeSorter)[0].dictType;
-      activeTreeNodeKey.value = `type:${activeDictType.value}`;
-      return;
-    }
-
-    if (!activeTreeNodeKey.value) {
-      activeTreeNodeKey.value = `type:${activeDictType.value}`;
     }
   }
 
-  async function loadDictTree() {
+  async function loadDictData() {
     const [dictTypeRes, dictItemRes] = await Promise.all([
       getDictTypeList({ pageSize: 999, currentPage: 1 }),
       getDictList({ pageSize: 999, currentPage: 1 })
@@ -227,7 +226,6 @@ export function useDict(_tableRef: Ref) {
     }
 
     syncActiveType();
-    dictTreeData.value = buildDictTree(dictTypeList.value, allDictItemList.value);
   }
 
   async function onSearch() {
@@ -256,7 +254,7 @@ export function useDict(_tableRef: Ref) {
   }
 
   async function refreshTreeAndList() {
-    await loadDictTree();
+    await loadDictData();
     await onSearch();
   }
 
@@ -323,20 +321,10 @@ export function useDict(_tableRef: Ref) {
     await refreshTreeAndList();
   }
 
-  function handleTreeNodeClick(node: DictTreeNode) {
-    activeTreeNodeKey.value = node.id;
-
-    if (node.nodeType === "type") {
-      activeDictType.value = node.dictType;
-      clearFilters();
-      onSearch();
-      return;
-    }
-
-    activeDictType.value = node.dictType;
-    form.label = "";
-    form.value = node.value ?? "";
-    form.status = "";
+  function handleTypeClick(type: DictTypeEntity) {
+    if (!type?.dictType || type.dictType === activeDictType.value) return;
+    activeDictType.value = type.dictType as DictType;
+    clearFilters();
     pagination.currentPage = 1;
     onSearch();
   }
@@ -458,7 +446,6 @@ export function useDict(_tableRef: Ref) {
 
           const nextType = (data?.dictType || curData.dictType) as DictType;
           activeDictType.value = nextType;
-          activeTreeNodeKey.value = `type:${nextType}`;
 
           message(mode === "add" ? "字典类型新增成功" : "字典类型修改成功", {
             type: "success"
@@ -517,7 +504,7 @@ export function useDict(_tableRef: Ref) {
   }
 
   onMounted(async () => {
-    await loadDictTree();
+    await loadDictData();
     await onSearch();
   });
 
@@ -528,9 +515,7 @@ export function useDict(_tableRef: Ref) {
     columns,
     dataList,
     pagination,
-    treeProps,
-    dictTreeData,
-    activeTreeNodeKey,
+    dictTypeCards,
     activeDictType,
     activeDictTypeLabel,
     activeDictTypeInfo,
@@ -544,7 +529,7 @@ export function useDict(_tableRef: Ref) {
     handleCurrentChange,
     handleSelectionChange,
     onSelectionCancel,
-    handleTreeNodeClick,
+    handleTypeClick,
     toggleCurrentTypeStatus,
     deleteCurrentType
   };

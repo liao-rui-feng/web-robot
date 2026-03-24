@@ -4,6 +4,8 @@ export type ProjectStatus = "pending" | "in_progress" | "completed";
 export interface DictOption {
   label: string;
   value: string;
+  isDefault?: boolean;
+  colorTag?: string;
 }
 
 interface FormItemProps {

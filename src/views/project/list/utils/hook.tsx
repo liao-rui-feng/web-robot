@@ -5,7 +5,8 @@ import { addDialog } from "@/components/ReDialog";
 import type { DictOption, FormItemProps, ProjectStatus } from "./types";
 import type { PaginationProps } from "@pureadmin/table";
 import { deviceDetection, getKeyList } from "@pureadmin/utils";
-import { getDictOptions, getProjectList } from "@/api/system";
+import { getProjectList } from "@/api/system";
+import { useDictOptions } from "@/hooks/useDictOptions";
 import { type Ref, reactive, ref, onMounted, h, toRaw, computed } from "vue";
 
 const statusLabelMap: Record<ProjectStatus, string> = {
@@ -47,6 +48,11 @@ const defaultFormInline: FormItemProps = {
   remark: ""
 };
 
+const DICT_TYPE_MAP = {
+  robotType: "robot_type",
+  robotStage: "robot_stage"
+} as const;
+
 type ProjectRow = FormItemProps & {
   id: number;
   createTime: number;
@@ -66,8 +72,19 @@ export function useProject(tableRef: Ref) {
   const dataList = ref<ProjectRow[]>([]);
   const loading = ref(true);
   const selectedNum = ref(0);
-  const robotTypeOptions = ref<DictOption[]>([...defaultRobotTypeOptions]);
-  const robotStageOptions = ref<DictOption[]>([...defaultRobotStageOptions]);
+  const { getOptionsByType, loadDictOptions } = useDictOptions(
+    [DICT_TYPE_MAP.robotType, DICT_TYPE_MAP.robotStage],
+    {
+      [DICT_TYPE_MAP.robotType]: defaultRobotTypeOptions,
+      [DICT_TYPE_MAP.robotStage]: defaultRobotStageOptions
+    }
+  );
+  const robotTypeOptions = computed<DictOption[]>(() =>
+    getOptionsByType(DICT_TYPE_MAP.robotType)
+  );
+  const robotStageOptions = computed<DictOption[]>(() =>
+    getOptionsByType(DICT_TYPE_MAP.robotStage)
+  );
   const robotTypeLabelMap = computed(() =>
     Object.fromEntries(robotTypeOptions.value.map(item => [item.value, item.label]))
   );
@@ -208,18 +225,6 @@ export function useProject(tableRef: Ref) {
     }, 400);
   }
 
-  async function initDictOptions() {
-    const { code, data } = await getDictOptions();
-    if (code === 0 && data) {
-      if (Array.isArray(data.robotTypeOptions) && data.robotTypeOptions.length) {
-        robotTypeOptions.value = data.robotTypeOptions;
-      }
-      if (Array.isArray(data.robotStageOptions) && data.robotStageOptions.length) {
-        robotStageOptions.value = data.robotStageOptions;
-      }
-    }
-  }
-
   const resetForm = formEl => {
     if (!formEl) return;
     formEl.resetFields();
@@ -282,7 +287,7 @@ export function useProject(tableRef: Ref) {
   }
 
   onMounted(async () => {
-    await initDictOptions();
+    await loadDictOptions();
     onSearch();
   });
 

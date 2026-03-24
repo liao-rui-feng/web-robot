@@ -28,9 +28,7 @@ const {
   columns,
   dataList,
   pagination,
-  treeProps,
-  dictTreeData,
-  activeTreeNodeKey,
+  dictTypeCards,
   activeDictType,
   activeDictTypeLabel,
   activeDictTypeInfo,
@@ -44,7 +42,7 @@ const {
   handleCurrentChange,
   handleSelectionChange,
   onSelectionCancel,
-  handleTreeNodeClick,
+  handleTypeClick,
   toggleCurrentTypeStatus,
   deleteCurrentType
 } = useDict(tableRef);
@@ -59,6 +57,7 @@ const {
             <span>字典目录</span>
             <div class="dict-type-actions">
               <el-button
+                class="dict-type-actions__btn"
                 size="small"
                 type="primary"
                 :icon="useRenderIcon(AddFill)"
@@ -67,6 +66,7 @@ const {
                 新增类型
               </el-button>
               <el-button
+                class="dict-type-actions__btn"
                 size="small"
                 :disabled="!activeDictTypeInfo"
                 @click="openTypeDialog('edit')"
@@ -74,6 +74,7 @@ const {
                 编辑类型
               </el-button>
               <el-button
+                class="dict-type-actions__btn"
                 size="small"
                 :disabled="!activeDictTypeInfo"
                 :type="activeDictTypeInfo?.status === 1 ? 'warning' : 'success'"
@@ -87,6 +88,7 @@ const {
               >
                 <template #reference>
                   <el-button
+                    class="dict-type-actions__btn"
                     size="small"
                     type="danger"
                     plain
@@ -101,41 +103,32 @@ const {
         </template>
 
         <el-scrollbar class="dict-type-panel__scroll">
-          <el-tree
-            :data="dictTreeData"
-            node-key="id"
-            highlight-current
-            default-expand-all
-            :props="treeProps"
-            :current-node-key="activeTreeNodeKey"
-            @node-click="handleTreeNodeClick"
-          >
-            <template #default="{ data }">
-              <div
-                :class="[
-                  'dict-tree-node',
-                  data.nodeType === 'type' ? 'dict-tree-node--type' : ''
-                ]"
-              >
-                <span class="dict-tree-node__title">{{ data.label }}</span>
-                <div class="dict-tree-node__meta">
-                  <template v-if="data.nodeType === 'type'">
-                    <el-tag size="small" :type="data.status === 1 ? 'success' : 'info'">
-                      {{ data.status === 1 ? "启用" : "停用" }}
-                    </el-tag>
-                    <el-tag v-if="data.builtin" size="small" type="warning">内置</el-tag>
-                    <el-tag size="small" type="info">{{ data.count }} 项</el-tag>
-                  </template>
-                  <template v-else>
-                    <span class="dict-tree-node__value">{{ data.value }}</span>
-                    <el-tag size="small" :type="data.status === 1 ? 'success' : 'info'">
-                      {{ data.status === 1 ? "启用" : "停用" }}
-                    </el-tag>
-                  </template>
-                </div>
+          <div class="dict-type-list">
+            <div
+              v-for="item in dictTypeCards"
+              :key="item.dictType"
+              :class="[
+                'dict-type-card',
+                activeDictType === item.dictType ? 'dict-type-card--active' : ''
+              ]"
+              @click="handleTypeClick(item)"
+            >
+              <div class="dict-type-card__title">{{ item.name }}</div>
+              <div class="dict-type-card__code">{{ item.dictType }}</div>
+              <div class="dict-type-card__meta">
+                <el-tag size="small" :type="item.status === 1 ? 'success' : 'info'">
+                  {{ item.status === 1 ? "启用" : "停用" }}
+                </el-tag>
+                <el-tag v-if="item.builtin" size="small" type="warning">内置</el-tag>
+                <el-tag size="small" type="info">{{ item.count }} 项</el-tag>
               </div>
-            </template>
-          </el-tree>
+            </div>
+            <el-empty
+              v-if="!dictTypeCards.length"
+              description="暂无字典类型"
+              :image-size="90"
+            />
+          </div>
         </el-scrollbar>
       </el-card>
 
@@ -322,43 +315,60 @@ const {
 }
 
 .dict-type-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+.dict-type-actions__btn {
+  width: 100%;
+  margin-left: 0 !important;
 }
 
 .dict-type-panel__scroll {
   max-height: calc(100vh - 286px);
 }
 
-.dict-tree-node {
+.dict-type-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dict-type-card {
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dict-type-card:hover {
+  border-color: var(--el-color-primary-light-5);
+}
+
+.dict-type-card--active {
+  border-color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+
+.dict-type-card__title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.dict-type-card__code {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.dict-type-card__meta {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
-  padding: 2px 0;
-}
-
-.dict-tree-node--type {
-  font-weight: 600;
-}
-
-.dict-tree-node__title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dict-tree-node__meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.dict-tree-node__value {
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
 }
 
 .dict-content {
@@ -385,6 +395,10 @@ const {
 
   .dict-type-panel {
     width: 100%;
+  }
+
+  .dict-type-actions {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
 
   .dict-type-panel__scroll {
