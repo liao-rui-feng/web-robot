@@ -297,6 +297,10 @@ const {
 </template>
 
 <style lang="scss" scoped>
+.main-content {
+  margin: 24px 24px 0 !important;
+}
+
 .dict-layout {
   display: flex;
   gap: 12px;
