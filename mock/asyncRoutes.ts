@@ -8,6 +8,28 @@ import { system, monitor, permission, frame, tabs } from "@/router/enums";
  * common：普通角色
  */
 
+const projectManagementRouter = {
+  path: "/project",
+  meta: {
+    icon: "ri:folder-chart-2-line",
+    title: "项目管理",
+    rank: system
+  },
+  children: [
+    {
+      path: "/project/list",
+      component: "project/list/index",
+      name: "ProjectList",
+      meta: {
+        icon: "ri:file-list-3-line",
+        title: "项目列表",
+        showParent: true,
+        roles: ["admin"]
+      }
+    }
+  ]
+};
+
 const systemManagementRouter = {
   path: "/system",
   meta: {
@@ -329,7 +351,23 @@ export default defineFakeRoute([
         code: 0,
         message: "操作成功",
         data: [
-          systemManagementRouter
+          projectManagementRouter,
+          {
+            ...systemManagementRouter,
+            children: [
+              ...(systemManagementRouter.children || []),
+              {
+                path: "/system/dict/index",
+                component: "system/dict/index",
+                name: "SystemDict",
+                meta: {
+                  icon: "ri:book-open-line",
+                  title: "字典管理",
+                  roles: ["admin"]
+                }
+              }
+            ]
+          }
           // systemMonitorRouter,
           // permissionRouter,
           // frameRouter,

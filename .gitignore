@@ -20,3 +20,6 @@ tests/**/coverage/
 *.njsproj
 *.sln
 tsconfig.tsbuildinfo
+/tmp/docs/requirement_text_extracted.txt
+/tmp/docs/req_copy.docx
+/tmp/

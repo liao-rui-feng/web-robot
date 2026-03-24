@@ -148,6 +148,92 @@ export default defineFakeRoute([
   },
   // 角色管理-权限-菜单权限
   {
+    url: "/project-list",
+    method: "post",
+    response: ({ body }) => {
+      let list = [
+        {
+          id: 1,
+          projectName: "Welding Safety Assessment",
+          projectCode: "PRJ-2026-001",
+          projectStatus: "pending",
+          owner: "ZhangSan",
+          robotType: "multi_joint_industrial",
+          robotStage: "research",
+          projectStartTime: "2026-03-01",
+          robotUseTime: "",
+          remark: "First assessment batch",
+          createTime: 1761264000000
+        },
+        {
+          id: 2,
+          projectName: "Handling Unit Safety Retrofit",
+          projectCode: "PRJ-2026-002",
+          projectStatus: "in_progress",
+          owner: "LiSi",
+          robotType: "collaborative",
+          robotStage: "use",
+          projectStartTime: "2026-02-18",
+          robotUseTime: "2025-10-15",
+          remark: "Contains SIL verification",
+          createTime: 1761177600000
+        },
+        {
+          id: 3,
+          projectName: "Assembly Station Lifecycle Review",
+          projectCode: "PRJ-2026-003",
+          projectStatus: "completed",
+          owner: "WangWu",
+          robotType: "logistics",
+          robotStage: "maintenance",
+          projectStartTime: "2025-09-12",
+          robotUseTime: "2024-06-20",
+          remark: "PL/SIL evaluation completed",
+          createTime: 1761091200000
+        },
+        {
+          id: 4,
+          projectName: "Composite Cell Functional Upgrade",
+          projectCode: "PRJ-2026-004",
+          projectStatus: "in_progress",
+          owner: "ZhaoLiu",
+          robotType: "composite",
+          robotStage: "scrap_terminal",
+          projectStartTime: "2026-01-10",
+          robotUseTime: "2021-08-01",
+          remark: "Terminal stage review",
+          createTime: 1761004800000
+        }
+      ];
+      list = list.filter(item =>
+        item.projectName.includes(body?.projectName ?? "")
+      );
+      list = list.filter(item =>
+        item.projectCode.includes(body?.projectCode ?? "")
+      );
+      list = list.filter(item => item.owner.includes(body?.owner ?? ""));
+      list = list.filter(item =>
+        item.robotType.includes(body?.robotType ?? "")
+      );
+      list = list.filter(item =>
+        item.robotStage.includes(body?.robotStage ?? "")
+      );
+      if (body?.projectStatus) {
+        list = list.filter(item => item.projectStatus === body.projectStatus);
+      }
+      return {
+        code: 0,
+        message: "success",
+        data: {
+          list,
+          total: list.length,
+          pageSize: 10,
+          currentPage: 1
+        }
+      };
+    }
+  },
+  {
     url: "/role-menu",
     method: "post",
     response: () => {
@@ -1811,5 +1897,5 @@ export default defineFakeRoute([
         };
       }
     }
-  }
+  },
 ]);
