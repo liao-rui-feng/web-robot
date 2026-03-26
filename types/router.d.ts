@@ -14,6 +14,12 @@ declare global {
   interface CustomizeRouteMeta {
     /** 菜单名称（兼容国际化、非国际化，如何用国际化的写法就必须在根目录的`locales`文件夹下对应添加） `必填` */
     title: string;
+    /** 面包屑显示名称（不影响左侧菜单标题） `可选` */
+    breadcrumbTitle?: string;
+    /** 基础工具模块子模块标识（用于复用页面识别上下文） */
+    moduleKey?: string;
+    /** 基础工具模块子模块名称（用于展示标题） */
+    moduleTitle?: string;
     /** 菜单图标 `可选` */
     icon?: string | FunctionalComponent;
     /** 菜单名称右侧的额外图标 */

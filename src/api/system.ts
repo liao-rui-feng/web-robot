@@ -51,6 +51,50 @@ export const getProjectList = (data?: object) => {
   return http.request<ResultTable>("post", "/project-list", { data });
 };
 
+export const getRiskAssessmentNodeList = (data?: object) => {
+  return http.request<ResultTable>("post", "/risk-assessment-node-list", {
+    data
+  });
+};
+
+export const getRiskAssessmentWorksheetList = (data?: object) => {
+  return http.request<ResultTable>("post", "/risk-assessment-worksheet-list", {
+    data
+  });
+};
+
+export const getRiskMatrixTemplateList = (data?: object) => {
+  return http.request<ResultTable>("post", "/risk-matrix-template-list", {
+    data
+  });
+};
+
+export const createRiskMatrixTemplate = (data?: object) => {
+  return http.request<ResultAny>("post", "/risk-matrix-template-create", {
+    data
+  });
+};
+
+export const deleteRiskMatrixTemplate = (data?: { templateId?: number }) => {
+  return http.request<ResultAny>("post", "/risk-matrix-template-delete", {
+    data
+  });
+};
+
+export const getRiskMatrixConfigDetail = (data?: object) => {
+  return http.request<ResultAny>("post", "/risk-matrix-config-detail", { data });
+};
+
+export const saveRiskMatrixConfig = (data?: object) => {
+  return http.request<ResultAny>("post", "/risk-matrix-config-save", { data });
+};
+
+export const getRiskAssessmentReportList = (data?: object) => {
+  return http.request<ResultTable>("post", "/risk-assessment-report-list", {
+    data
+  });
+};
+
 export const getDictList = (data?: object) => {
   return http.request<ResultTable>("post", "/dict-list", { data });
 };

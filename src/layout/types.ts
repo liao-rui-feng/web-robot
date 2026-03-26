@@ -17,6 +17,9 @@ export const routerArrays: Array<RouteConfigs> =
 
 export type routeMetaType = {
   title?: string;
+  breadcrumbTitle?: string;
+  moduleKey?: string;
+  moduleTitle?: string;
   icon?: string | FunctionalComponent;
   showLink?: boolean;
   savedPosition?: boolean;

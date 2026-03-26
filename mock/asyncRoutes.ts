@@ -30,6 +30,221 @@ const projectManagementRouter = {
   ]
 };
 
+const baseToolsRouter = {
+  path: "/base-tools",
+  meta: {
+    icon: "ri:tools-line",
+    title: "基础工具模块",
+    rank: system
+  },
+  children: [
+    {
+      path: "/base-tools/risk-assessment",
+      name: "BaseToolsRiskAssessment",
+      meta: {
+        icon: "ri:alert-line",
+        title: "\u98ce\u9669\u8bc4\u4f30",
+        roles: ["admin"]
+      },
+      children: [
+        {
+          path: "/base-tools/risk-assessment/evaluation-project",
+          component: "base-tools/evaluation-project/index",
+          name: "BaseToolsRiskAssessmentEvaluationProject",
+          meta: {
+            title: "\u8bc4\u4f30\u9879\u76ee",
+            breadcrumbTitle:
+              "\u98ce\u9669\u8bc4\u4f30 / \u8bc4\u4f30\u9879\u76ee",
+            roles: ["admin"],
+            moduleKey: "riskAssessment",
+            moduleTitle: "\u98ce\u9669\u8bc4\u4f30"
+          }
+        },
+        {
+          path: "/base-tools/risk-assessment/risk-matrix-management",
+          component: "base-tools/risk-assessment/risk-matrix-management/index",
+          name: "BaseToolsRiskAssessmentRiskMatrixManagement",
+          meta: {
+            title: "\u98ce\u9669\u77e9\u9635\u7ba1\u7406",
+            breadcrumbTitle:
+              "\u98ce\u9669\u8bc4\u4f30 / \u98ce\u9669\u77e9\u9635\u7ba1\u7406",
+            roles: ["admin"]
+          }
+        },
+        {
+          path: "/base-tools/risk-assessment/report-management",
+          component: "base-tools/risk-assessment/report-management/index",
+          name: "BaseToolsRiskAssessmentReportManagement",
+          meta: {
+            title: "\u62a5\u8868\u7ba1\u7406",
+            breadcrumbTitle: "\u98ce\u9669\u8bc4\u4f30 / \u62a5\u8868\u7ba1\u7406",
+            roles: ["admin"]
+          }
+        },
+        {
+          path: "/base-tools/risk-assessment/node-list",
+          component: "base-tools/risk-assessment/node-list/index",
+          name: "BaseToolsRiskAssessmentNodeList",
+          meta: {
+            title: "\u8282\u70b9\u5217\u8868",
+            breadcrumbTitle:
+              "\u98ce\u9669\u8bc4\u4f30 / \u8bc4\u4f30\u9879\u76ee / \u8282\u70b9\u5217\u8868",
+            showLink: false,
+            activePath: "/base-tools/risk-assessment/evaluation-project",
+            roles: ["admin"]
+          }
+        },
+        {
+          path: "/base-tools/risk-assessment/analysis-worksheet",
+          component: "base-tools/risk-assessment/analysis-worksheet/index",
+          name: "BaseToolsRiskAssessmentAnalysisWorksheet",
+          meta: {
+            title: "\u98ce\u9669\u5206\u6790\u5de5\u4f5c\u8868",
+            breadcrumbTitle:
+              "\u98ce\u9669\u8bc4\u4f30 / \u8bc4\u4f30\u9879\u76ee / \u98ce\u9669\u5206\u6790\u5de5\u4f5c\u8868",
+            showLink: false,
+            activePath: "/base-tools/risk-assessment/evaluation-project",
+            roles: ["admin"]
+          }
+        },
+        {
+          path: "/base-tools/risk-assessment/risk-matrix-config",
+          component: "base-tools/risk-assessment/risk-matrix-config/index",
+          name: "BaseToolsRiskAssessmentRiskMatrixConfig",
+          meta: {
+            title: "\u98ce\u9669\u77e9\u9635\u914d\u7f6e",
+            breadcrumbTitle:
+              "\u98ce\u9669\u8bc4\u4f30 / \u98ce\u9669\u77e9\u9635\u7ba1\u7406 / \u98ce\u9669\u77e9\u9635\u914d\u7f6e",
+            showLink: false,
+            activePath: "/base-tools/risk-assessment/risk-matrix-management",
+            roles: ["admin"]
+          }
+        }
+      ]
+    },
+    {
+      path: "/base-tools/failure-mode",
+      name: "BaseToolsFailureMode",
+      meta: {
+        icon: "ri:error-warning-line",
+        title: "故障失效模式",
+        roles: ["admin"]
+      },
+      children: [
+        {
+          path: "/base-tools/failure-mode/evaluation-project",
+          component: "base-tools/evaluation-project/index",
+          name: "BaseToolsFailureModeEvaluationProject",
+          meta: {
+            title: "评估项目",
+            breadcrumbTitle: "故障失效模式 / 评估项目",
+            showParent: true,
+            roles: ["admin"],
+            moduleKey: "failureMode",
+            moduleTitle: "故障失效模式"
+          }
+        }
+      ]
+    },
+    {
+      path: "/base-tools/common-cause-failure",
+      name: "BaseToolsCommonCauseFailure",
+      meta: {
+        icon: "ri:share-forward-line",
+        title: "相关（共因）失效评价",
+        roles: ["admin"]
+      },
+      children: [
+        {
+          path: "/base-tools/common-cause-failure/evaluation-project",
+          component: "base-tools/evaluation-project/index",
+          name: "BaseToolsCommonCauseFailureEvaluationProject",
+          meta: {
+            title: "评估项目",
+            breadcrumbTitle: "相关（共因）失效评价 / 评估项目",
+            showParent: true,
+            roles: ["admin"],
+            moduleKey: "commonCauseFailure",
+            moduleTitle: "相关（共因）失效评价"
+          }
+        }
+      ]
+    },
+    {
+      path: "/base-tools/safety-loop-determination",
+      name: "BaseToolsSafetyLoopDetermination",
+      meta: {
+        icon: "ri:git-merge-line",
+        title: "安全回路确定",
+        roles: ["admin"]
+      },
+      children: [
+        {
+          path: "/base-tools/safety-loop-determination/evaluation-project",
+          component: "base-tools/evaluation-project/index",
+          name: "BaseToolsSafetyLoopDeterminationEvaluationProject",
+          meta: {
+            title: "评估项目",
+            breadcrumbTitle: "安全回路确定 / 评估项目",
+            showParent: true,
+            roles: ["admin"],
+            moduleKey: "safetyLoopDetermination",
+            moduleTitle: "安全回路确定"
+          }
+        }
+      ]
+    },
+    {
+      path: "/base-tools/failure-probability-analysis",
+      name: "BaseToolsFailureProbabilityAnalysis",
+      meta: {
+        icon: "ri:bar-chart-grouped-line",
+        title: "失效概率分析计算",
+        roles: ["admin"]
+      },
+      children: [
+        {
+          path: "/base-tools/failure-probability-analysis/evaluation-project",
+          component: "base-tools/evaluation-project/index",
+          name: "BaseToolsFailureProbabilityAnalysisEvaluationProject",
+          meta: {
+            title: "评估项目",
+            breadcrumbTitle: "失效概率分析计算 / 评估项目",
+            showParent: true,
+            roles: ["admin"],
+            moduleKey: "failureProbabilityAnalysis",
+            moduleTitle: "失效概率分析计算"
+          }
+        }
+      ]
+    },
+    {
+      path: "/base-tools/diagnostic-effectiveness",
+      name: "BaseToolsDiagnosticEffectiveness",
+      meta: {
+        icon: "ri:shield-check-line",
+        title: "诊断有效性评价",
+        roles: ["admin"]
+      },
+      children: [
+        {
+          path: "/base-tools/diagnostic-effectiveness/evaluation-project",
+          component: "base-tools/evaluation-project/index",
+          name: "BaseToolsDiagnosticEffectivenessEvaluationProject",
+          meta: {
+            title: "评估项目",
+            breadcrumbTitle: "诊断有效性评价 / 评估项目",
+            showParent: true,
+            roles: ["admin"],
+            moduleKey: "diagnosticEffectiveness",
+            moduleTitle: "诊断有效性评价"
+          }
+        }
+      ]
+    }
+  ]
+};
+
 const systemManagementRouter = {
   path: "/system",
   meta: {
@@ -352,6 +567,7 @@ export default defineFakeRoute([
         message: "操作成功",
         data: [
           projectManagementRouter,
+          baseToolsRouter,
           {
             ...systemManagementRouter,
             children: [

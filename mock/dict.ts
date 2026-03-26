@@ -132,7 +132,7 @@ let dictItemData: DictItemRecord[] = [
   {
     id: 8,
     dictType: "robot_stage",
-    label: "报废极端",
+    label: "报废阶段",
     value: "scrap_terminal",
     sort: 4,
     status: 1,

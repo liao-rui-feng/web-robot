@@ -6,7 +6,11 @@ import { useTags } from "../../hooks/useTag";
 import { routerArrays } from "@/layout/types";
 import { onClickOutside } from "@vueuse/core";
 import TagChrome from "./components/TagChrome.vue";
-import { handleAliveRoute, getTopMenu } from "@/router/utils";
+import {
+  findRouteByPath,
+  handleAliveRoute,
+  getTopMenu
+} from "@/router/utils";
 import { useSettingStoreHook } from "@/store/modules/settings";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
@@ -65,6 +69,17 @@ const fixedTags = [
   ...routerArrays,
   ...usePermissionStoreHook().flatteningRoutes.filter(v => v?.meta?.fixedTag)
 ];
+
+const getTagTitle = (item: RouteConfigs): string => {
+  const routeMeta = (item?.meta || {}) as CustomizeRouteMeta;
+  if (routeMeta.breadcrumbTitle) return routeMeta.breadcrumbTitle;
+  if (item?.path) {
+    const latestRoute = findRouteByPath(item.path, router.options.routes as any);
+    const latestMeta = latestRoute?.meta as CustomizeRouteMeta | undefined;
+    if (latestMeta?.breadcrumbTitle) return latestMeta.breadcrumbTitle;
+  }
+  return routeMeta.title || "";
+};
 
 const dynamicTagView = async () => {
   await nextTick();
@@ -595,7 +610,7 @@ onBeforeUnmount(() => {
             <span
               class="tag-title dark:text-text_color_primary! dark:hover:text-primary!"
             >
-              {{ item.meta.title }}
+              {{ getTagTitle(item) }}
             </span>
             <span
               v-if="
@@ -620,7 +635,7 @@ onBeforeUnmount(() => {
               <TagChrome />
             </div>
             <span class="tag-title">
-              {{ item.meta.title }}
+              {{ getTagTitle(item) }}
             </span>
             <span
               v-if="isFixedTag(item) ? false : index !== 0"

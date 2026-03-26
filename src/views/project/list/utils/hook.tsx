@@ -1,40 +1,16 @@
-﻿import dayjs from "dayjs";
+import dayjs from "dayjs";
 import editForm from "../form.vue";
 import { message } from "@/utils/message";
 import { addDialog } from "@/components/ReDialog";
-import type { DictOption, FormItemProps, ProjectStatus } from "./types";
-import type { PaginationProps } from "@pureadmin/table";
+import type { FormItemProps, ProjectStatus } from "./types";
 import { deviceDetection, getKeyList } from "@pureadmin/utils";
 import { getProjectList } from "@/api/system";
-import { useDictOptions } from "@/hooks/useDictOptions";
-import { type Ref, reactive, ref, onMounted, h, toRaw, computed } from "vue";
-
-const statusLabelMap: Record<ProjectStatus, string> = {
-  pending: "待启动",
-  in_progress: "进行中",
-  completed: "已完成"
-};
-
-const statusTagTypeMap: Record<ProjectStatus, "info" | "warning" | "success"> =
-  {
-    pending: "info",
-    in_progress: "warning",
-    completed: "success"
-  };
-
-const defaultRobotTypeOptions: DictOption[] = [
-  { label: "多关节工业机器人", value: "multi_joint_industrial" },
-  { label: "协作机器人", value: "collaborative" },
-  { label: "物流机器人", value: "logistics" },
-  { label: "复合机器人", value: "composite" }
-];
-
-const defaultRobotStageOptions: DictOption[] = [
-  { label: "研发阶段", value: "research" },
-  { label: "使用阶段", value: "use" },
-  { label: "维护阶段", value: "maintenance" },
-  { label: "报废极端", value: "scrap_terminal" }
-];
+import { useProjectQueryBase } from "../../shared/useProjectQueryBase";
+import {
+  projectStatusLabelMap,
+  projectStatusTagTypeMap
+} from "../../shared/constants";
+import { type Ref, ref, h } from "vue";
 
 const defaultFormInline: FormItemProps = {
   projectName: "",
@@ -48,56 +24,28 @@ const defaultFormInline: FormItemProps = {
   remark: ""
 };
 
-const DICT_TYPE_MAP = {
-  robotType: "robot_type",
-  robotStage: "robot_stage"
-} as const;
-
 type ProjectRow = FormItemProps & {
   id: number;
   createTime: number;
 };
 
 export function useProject(tableRef: Ref) {
-  const form = reactive({
-    projectName: "",
-    projectCode: "",
-    projectStatus: "",
-    owner: "",
-    robotType: "",
-    robotStage: ""
-  });
-
   const formRef = ref();
-  const dataList = ref<ProjectRow[]>([]);
-  const loading = ref(true);
   const selectedNum = ref(0);
-  const { getOptionsByType, loadDictOptions } = useDictOptions(
-    [DICT_TYPE_MAP.robotType, DICT_TYPE_MAP.robotStage],
-    {
-      [DICT_TYPE_MAP.robotType]: defaultRobotTypeOptions,
-      [DICT_TYPE_MAP.robotStage]: defaultRobotStageOptions
-    }
-  );
-  const robotTypeOptions = computed<DictOption[]>(() =>
-    getOptionsByType(DICT_TYPE_MAP.robotType)
-  );
-  const robotStageOptions = computed<DictOption[]>(() =>
-    getOptionsByType(DICT_TYPE_MAP.robotStage)
-  );
-  const robotTypeLabelMap = computed(() =>
-    Object.fromEntries(robotTypeOptions.value.map(item => [item.value, item.label]))
-  );
-  const robotStageLabelMap = computed(() =>
-    Object.fromEntries(robotStageOptions.value.map(item => [item.value, item.label]))
-  );
-
-  const pagination = reactive<PaginationProps>({
-    total: 0,
-    pageSize: 10,
-    currentPage: 1,
-    background: true
-  });
+  const {
+    form,
+    loading,
+    dataList,
+    pagination,
+    robotTypeOptions,
+    robotStageOptions,
+    robotTypeLabelMap,
+    robotStageLabelMap,
+    onSearch,
+    resetForm,
+    handleSizeChange,
+    handleCurrentChange
+  } = useProjectQueryBase<ProjectRow>(getProjectList);
 
   const columns: TableColumnList = [
     {
@@ -121,8 +69,11 @@ export function useProject(tableRef: Ref) {
       prop: "projectStatus",
       width: 110,
       cellRenderer: scope => (
-        <el-tag size={scope.props.size} type={statusTagTypeMap[scope.row.projectStatus]}>
-          {statusLabelMap[scope.row.projectStatus]}
+        <el-tag
+          size={scope.props.size}
+          type={projectStatusTagTypeMap[scope.row.projectStatus as ProjectStatus]}
+        >
+          {projectStatusLabelMap[scope.row.projectStatus as ProjectStatus]}
         </el-tag>
       )
     },
@@ -181,14 +132,6 @@ export function useProject(tableRef: Ref) {
     onSearch();
   }
 
-  function handleSizeChange(val: number) {
-    console.log(`${val} items per page`);
-  }
-
-  function handleCurrentChange(val: number) {
-    console.log(`current page: ${val}`);
-  }
-
   function handleSelectionChange(val: Array<ProjectRow>) {
     selectedNum.value = val.length;
     tableRef.value?.setAdaptive?.();
@@ -209,27 +152,6 @@ export function useProject(tableRef: Ref) {
     onSelectionCancel();
     onSearch();
   }
-
-  async function onSearch() {
-    loading.value = true;
-    const { code, data } = await getProjectList(toRaw(form));
-    if (code === 0) {
-      dataList.value = (data.list ?? []) as ProjectRow[];
-      pagination.total = data.total;
-      pagination.pageSize = data.pageSize;
-      pagination.currentPage = data.currentPage;
-    }
-
-    setTimeout(() => {
-      loading.value = false;
-    }, 400);
-  }
-
-  const resetForm = formEl => {
-    if (!formEl) return;
-    formEl.resetFields();
-    onSearch();
-  };
 
   function openDialog(mode: "add" | "edit" | "detail" = "add", row?: ProjectRow) {
     const titleMap = {
@@ -286,11 +208,6 @@ export function useProject(tableRef: Ref) {
     });
   }
 
-  onMounted(async () => {
-    await loadDictOptions();
-    onSearch();
-  });
-
   return {
     form,
     loading,
@@ -309,6 +226,6 @@ export function useProject(tableRef: Ref) {
     handleCurrentChange,
     handleSelectionChange,
     onSelectionCancel,
-    statusLabelMap
+    statusLabelMap: projectStatusLabelMap
   };
 }

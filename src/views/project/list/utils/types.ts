@@ -1,12 +1,10 @@
-﻿// 模块内表单字段定义
-export type ProjectStatus = "pending" | "in_progress" | "completed";
+import type {
+  ProjectDictOption,
+  ProjectStatus
+} from "../../shared/constants";
 
-export interface DictOption {
-  label: string;
-  value: string;
-  isDefault?: boolean;
-  colorTag?: string;
-}
+export type { ProjectStatus };
+export type DictOption = ProjectDictOption;
 
 interface FormItemProps {
   /** 项目名称 */

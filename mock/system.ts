@@ -1,6 +1,312 @@
 import { defineFakeRoute } from "vite-plugin-fake-server/client";
 import { faker } from "@faker-js/faker/locale/zh_CN";
 
+const paginateList = (list: any[], body: any) => {
+  const currentPage = Number(body?.currentPage) > 0 ? Number(body.currentPage) : 1;
+  const pageSize = Number(body?.pageSize) > 0 ? Number(body.pageSize) : 10;
+  const start = (currentPage - 1) * pageSize;
+  return {
+    list: list.slice(start, start + pageSize),
+    total: list.length,
+    pageSize,
+    currentPage
+  };
+};
+
+const riskAssessmentNodeSeed = [
+  {
+    id: 101,
+    projectId: 1,
+    projectCode: "PRJ-2026-001",
+    projectName: "焊接单元功能安全评估",
+    nodeName: "焊接工位A",
+    analyst: "张三",
+    designIntent: "保持焊接电流与送丝速度稳定",
+    mainInterlockControlPoint: "门禁联锁 + 急停继电器",
+    mainEquipmentParams: "电流220A / 送丝4.2m/min",
+    referenceDrawing: "DRW-RA-001",
+    analysisTime: "2026-03-08",
+    remark: "首批HAZOP分析节点"
+  },
+  {
+    id: 102,
+    projectId: 1,
+    projectCode: "PRJ-2026-001",
+    projectName: "焊接单元功能安全评估",
+    nodeName: "转运单元",
+    analyst: "李四",
+    designIntent: "托盘安全转运与停止",
+    mainInterlockControlPoint: "安全PLC双通道",
+    mainEquipmentParams: "速度0.6m/s / 载荷40kg",
+    referenceDrawing: "DRW-RA-002",
+    analysisTime: "2026-03-10",
+    remark: ""
+  },
+  {
+    id: 201,
+    projectId: 2,
+    projectCode: "PRJ-2026-002",
+    projectName: "搬运单元安全改造评估",
+    nodeName: "机械臂本体",
+    analyst: "王五",
+    designIntent: "保证抓取放置轨迹精确",
+    mainInterlockControlPoint: "扭矩限制 + 区域监控",
+    mainEquipmentParams: "臂展1.8m / 负载12kg",
+    referenceDrawing: "DRW-RA-010",
+    analysisTime: "2026-02-22",
+    remark: "需补充SIL验证"
+  }
+];
+
+const riskAssessmentWorksheetSeed = [
+  {
+    id: 1001,
+    projectId: 1,
+    nodeId: 101,
+    parameter: "焊接电流",
+    deviation: "流量高",
+    cause: "人员误操作",
+    consequence: "—",
+    rawLikelihood: "L3",
+    rawConsequenceLevel: "C3",
+    rawRiskLevel: "R9",
+    currentProtection: "—",
+    residualOneLikelihood: "L2",
+    residualOneConsequenceLevel: "C3",
+    residualOneRiskLevel: "R6",
+    suggestedProtection: "—",
+    residualTwoLikelihood: "L1",
+    residualTwoConsequenceLevel: "C3",
+    residualTwoRiskLevel: "R3",
+    remark: ""
+  },
+  {
+    id: 1002,
+    projectId: 1,
+    nodeId: 101,
+    parameter: "焊接电流",
+    deviation: "压力高",
+    cause: "人员误操作",
+    consequence: "—",
+    rawLikelihood: "L2",
+    rawConsequenceLevel: "C2",
+    rawRiskLevel: "R4",
+    currentProtection: "报警及响应1203E设备缺损",
+    residualOneLikelihood: "L2",
+    residualOneConsequenceLevel: "C1",
+    residualOneRiskLevel: "R2",
+    suggestedProtection: "—",
+    residualTwoLikelihood: "L1",
+    residualTwoConsequenceLevel: "C1",
+    residualTwoRiskLevel: "R1",
+    remark: ""
+  },
+  {
+    id: 2001,
+    projectId: 2,
+    nodeId: 201,
+    parameter: "运行速度",
+    deviation: "偏高",
+    cause: "参数配置错误",
+    consequence: "协作区域碰撞风险增加",
+    rawLikelihood: "L3",
+    rawConsequenceLevel: "C4",
+    rawRiskLevel: "R12",
+    currentProtection: "区域扫描 + 限位开关",
+    residualOneLikelihood: "L2",
+    residualOneConsequenceLevel: "C4",
+    residualOneRiskLevel: "R8",
+    suggestedProtection: "速度监控逻辑",
+    residualTwoLikelihood: "L1",
+    residualTwoConsequenceLevel: "C4",
+    residualTwoRiskLevel: "R4",
+    remark: ""
+  }
+];
+
+let riskMatrixTemplateSeed = [
+  {
+    id: 1,
+    templateName: "默认标准模板",
+    templateCode: "RM-001",
+    remark: "通用风险矩阵模板",
+    updateTime: 1761264000000,
+    createTime: 1761177600000
+  },
+  {
+    id: 2,
+    templateName: "高速单元模板",
+    templateCode: "RM-002",
+    remark: "适用于高速运动工况",
+    updateTime: 1761091200000,
+    createTime: 1761004800000
+  }
+];
+
+let riskMatrixTemplateIdSeed = 3;
+
+const defaultFrequencyColumns = [
+  {
+    key: "freq1Risk",
+    level: "1",
+    description: "从未发生过",
+    rangeDesc: ">0.0001次/年，且≤0.001"
+  },
+  {
+    key: "freq2Risk",
+    level: "2",
+    description: "国内曾发生过",
+    rangeDesc: ">0.001次/年，且≤0.01"
+  },
+  {
+    key: "freq3Risk",
+    level: "3",
+    description: "行业内曾发生过",
+    rangeDesc: ">0.01次/年，且≤0.1"
+  },
+  {
+    key: "freq4Risk",
+    level: "4",
+    description: "公司内发生过",
+    rangeDesc: ">0.1次/年，且≤1"
+  },
+  {
+    key: "freq5Risk",
+    level: "5",
+    description: "装置内发生过",
+    rangeDesc: ">1次/年"
+  }
+];
+
+const defaultMatrixRows = [
+  {
+    level: "1",
+    personnelConsequence: "无人员伤害。",
+    environmentDamage: "无影响。",
+    propertyLoss: "无直接经济损失。",
+    reputationImpact: "不会引起社会公众的关注。",
+    freq1Risk: "I",
+    freq2Risk: "I",
+    freq3Risk: "I",
+    freq4Risk: "II",
+    freq5Risk: "II"
+  },
+  {
+    level: "2",
+    personnelConsequence: "对人员造成轻微伤害。",
+    environmentDamage: "轻微影响。",
+    propertyLoss: "直接经济损失10万元以下。",
+    reputationImpact: "造成工厂所在行政区域内的影响。",
+    freq1Risk: "I",
+    freq2Risk: "I",
+    freq3Risk: "II",
+    freq4Risk: "II",
+    freq5Risk: "III"
+  },
+  {
+    level: "3",
+    personnelConsequence: "一个或多个人造成严重永久性伤害。",
+    environmentDamage: "较小影响。",
+    propertyLoss: "直接经济损失10~100万元。",
+    reputationImpact: "造成县域范围内的影响。",
+    freq1Risk: "I",
+    freq2Risk: "II",
+    freq3Risk: "II",
+    freq4Risk: "III",
+    freq5Risk: "III"
+  },
+  {
+    level: "4",
+    personnelConsequence: "造成1~2人死亡。",
+    environmentDamage: "局部影响。",
+    propertyLoss: "直接经济损失100~1000万元。",
+    reputationImpact: "造成省域范围内的影响。",
+    freq1Risk: "II",
+    freq2Risk: "II",
+    freq3Risk: "III",
+    freq4Risk: "III",
+    freq5Risk: "IV"
+  },
+  {
+    level: "5",
+    personnelConsequence: "造成3~9人死亡。",
+    environmentDamage: "重大影响。",
+    propertyLoss: "直接经济损失1000~5000万元。",
+    reputationImpact: "造成全国范围内的影响。",
+    freq1Risk: "II",
+    freq2Risk: "III",
+    freq3Risk: "III",
+    freq4Risk: "IV",
+    freq5Risk: "V"
+  },
+  {
+    level: "6",
+    personnelConsequence: "造成10人以上死亡。",
+    environmentDamage: "造成10人以上死亡。",
+    propertyLoss: "直接经济损失5000万元以上。",
+    reputationImpact: "造成国际影响。",
+    freq1Risk: "III",
+    freq2Risk: "III",
+    freq3Risk: "IV",
+    freq4Risk: "V",
+    freq5Risk: "V"
+  }
+];
+
+const cloneData = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+
+const createEmptyMatrixConfig = (payload: {
+  templateId: number;
+  templateName: string;
+  templateCode: string;
+  remark?: string;
+}) => ({
+  templateId: payload.templateId,
+  templateName: payload.templateName,
+  templateCode: payload.templateCode,
+  remark: payload.remark || "",
+  frequencyColumns: cloneData(defaultFrequencyColumns),
+  rows: cloneData(defaultMatrixRows)
+});
+
+const riskMatrixConfigSeed = {
+  1: createEmptyMatrixConfig({
+    templateId: 1,
+    templateName: "默认标准模板",
+    templateCode: "RM-001",
+    remark: "通用风险矩阵模板"
+  }),
+  2: createEmptyMatrixConfig({
+    templateId: 2,
+    templateName: "高速单元模板",
+    templateCode: "RM-002",
+    remark: "适用于高速运动工况"
+  })
+};
+
+const riskAssessmentReportSeed = [
+  {
+    id: 1,
+    projectName: "焊接单元功能安全评估",
+    projectCode: "PRJ-2026-001",
+    unitName: "焊接单元",
+    nodeName: "焊接工位A",
+    analyst: "张三",
+    analysisTime: "2026-03-12",
+    reportNo: "REP-RA-001"
+  },
+  {
+    id: 2,
+    projectName: "搬运单元安全改造评估",
+    projectCode: "PRJ-2026-002",
+    unitName: "搬运单元",
+    nodeName: "机械臂本体",
+    analyst: "王五",
+    analysisTime: "2026-02-28",
+    reportNo: "REP-RA-002"
+  }
+];
+
 export default defineFakeRoute([
   // 用户管理
   {
@@ -154,54 +460,54 @@ export default defineFakeRoute([
       let list = [
         {
           id: 1,
-          projectName: "Welding Safety Assessment",
+          projectName: "焊接单元功能安全评估",
           projectCode: "PRJ-2026-001",
           projectStatus: "pending",
-          owner: "ZhangSan",
+          owner: "张三",
           robotType: "multi_joint_industrial",
           robotStage: "research",
           projectStartTime: "2026-03-01",
           robotUseTime: "",
-          remark: "First assessment batch",
+          remark: "首批功能安全评估项目",
           createTime: 1761264000000
         },
         {
           id: 2,
-          projectName: "Handling Unit Safety Retrofit",
+          projectName: "搬运单元安全改造评估",
           projectCode: "PRJ-2026-002",
           projectStatus: "in_progress",
-          owner: "LiSi",
+          owner: "李四",
           robotType: "collaborative",
           robotStage: "use",
           projectStartTime: "2026-02-18",
           robotUseTime: "2025-10-15",
-          remark: "Contains SIL verification",
+          remark: "包含SIL验证项",
           createTime: 1761177600000
         },
         {
           id: 3,
-          projectName: "Assembly Station Lifecycle Review",
+          projectName: "装配工位全生命周期复核",
           projectCode: "PRJ-2026-003",
           projectStatus: "completed",
-          owner: "WangWu",
+          owner: "王五",
           robotType: "logistics",
           robotStage: "maintenance",
           projectStartTime: "2025-09-12",
           robotUseTime: "2024-06-20",
-          remark: "PL/SIL evaluation completed",
+          remark: "PL/SIL评估已完成",
           createTime: 1761091200000
         },
         {
           id: 4,
-          projectName: "Composite Cell Functional Upgrade",
+          projectName: "复合工位功能升级评估",
           projectCode: "PRJ-2026-004",
           projectStatus: "in_progress",
-          owner: "ZhaoLiu",
+          owner: "赵六",
           robotType: "composite",
           robotStage: "scrap_terminal",
           projectStartTime: "2026-01-10",
           robotUseTime: "2021-08-01",
-          remark: "Terminal stage review",
+          remark: "报废阶段风险复核",
           createTime: 1761004800000
         }
       ];
@@ -224,12 +530,246 @@ export default defineFakeRoute([
       return {
         code: 0,
         message: "success",
-        data: {
-          list,
-          total: list.length,
-          pageSize: 10,
-          currentPage: 1
-        }
+        data: paginateList(list, body)
+      };
+    }
+  },
+  {
+    url: "/risk-assessment-node-list",
+    method: "post",
+    response: ({ body }) => {
+      let list = [...riskAssessmentNodeSeed];
+
+      if (body?.projectId) {
+        list = list.filter(item => String(item.projectId) === String(body.projectId));
+      }
+
+      list = list.filter(item => item.nodeName.includes(body?.nodeName ?? ""));
+      list = list.filter(item => item.analyst.includes(body?.analyst ?? ""));
+
+      return {
+        code: 0,
+        message: "success",
+        data: paginateList(list, body)
+      };
+    }
+  },
+  {
+    url: "/risk-assessment-worksheet-list",
+    method: "post",
+    response: ({ body }) => {
+      let list = [...riskAssessmentWorksheetSeed];
+
+      if (body?.projectId) {
+        list = list.filter(item => String(item.projectId) === String(body.projectId));
+      }
+      if (body?.nodeId) {
+        list = list.filter(item => String(item.nodeId) === String(body.nodeId));
+      }
+
+      list = list.filter(item => item.parameter.includes(body?.parameter ?? ""));
+      list = list.filter(item => item.deviation.includes(body?.deviation ?? ""));
+
+      return {
+        code: 0,
+        message: "success",
+        data: paginateList(list, body)
+      };
+    }
+  },
+  {
+    url: "/risk-matrix-template-list",
+    method: "post",
+    response: ({ body }) => {
+      let list = [...riskMatrixTemplateSeed];
+      list = list.filter(item =>
+        item.templateName.includes(body?.templateName ?? "")
+      );
+      list = list.filter(item =>
+        item.templateCode.includes(body?.templateCode ?? "")
+      );
+      return {
+        code: 0,
+        message: "success",
+        data: paginateList(list, body)
+      };
+    }
+  },
+  {
+    url: "/risk-matrix-template-create",
+    method: "post",
+    response: ({ body }) => {
+      const templateName = String(body?.templateName || "").trim();
+      const templateCode = String(body?.templateCode || "").trim();
+      const remark = String(body?.remark || "").trim();
+
+      if (!templateName || !templateCode) {
+        return {
+          code: 10001,
+          message: "模板名称和模板编号不能为空",
+          data: null
+        };
+      }
+
+      const repeated = riskMatrixTemplateSeed.find(
+        item => item.templateName === templateName || item.templateCode === templateCode
+      );
+      if (repeated) {
+        return {
+          code: 10002,
+          message: "模板名称或模板编号已存在",
+          data: null
+        };
+      }
+
+      const now = Date.now();
+      const row = {
+        id: riskMatrixTemplateIdSeed++,
+        templateName,
+        templateCode,
+        remark,
+        updateTime: now,
+        createTime: now
+      };
+
+      riskMatrixTemplateSeed = [row, ...riskMatrixTemplateSeed];
+      riskMatrixConfigSeed[row.id] = createEmptyMatrixConfig({
+        templateId: row.id,
+        templateName: row.templateName,
+        templateCode: row.templateCode,
+        remark: row.remark
+      });
+
+      return {
+        code: 0,
+        message: "success",
+        data: row
+      };
+    }
+  },
+  {
+    url: "/risk-matrix-template-delete",
+    method: "post",
+    response: ({ body }) => {
+      const templateId = Number(body?.templateId || 0);
+      if (!templateId) {
+        return {
+          code: 10001,
+          message: "缺少模板ID",
+          data: null
+        };
+      }
+
+      const index = riskMatrixTemplateSeed.findIndex(item => item.id === templateId);
+      if (index < 0) {
+        return {
+          code: 10002,
+          message: "模板不存在",
+          data: null
+        };
+      }
+
+      riskMatrixTemplateSeed.splice(index, 1);
+      delete riskMatrixConfigSeed[templateId];
+
+      return {
+        code: 0,
+        message: "success",
+        data: null
+      };
+    }
+  },
+  {
+    url: "/risk-matrix-config-detail",
+    method: "post",
+    response: ({ body }) => {
+      const templateId = Number(body?.templateId || 0);
+      const mode = body?.mode;
+      if (mode === "create") {
+        const projectName = String(body?.projectName || "").trim();
+        return {
+          code: 0,
+          message: "success",
+          data: createEmptyMatrixConfig({
+            templateId: 0,
+            templateName: projectName ? `${projectName}风险矩阵` : "新建风险矩阵",
+            templateCode: "",
+            remark: ""
+          })
+        };
+      }
+
+      if (!templateId) {
+        return {
+          code: 0,
+          message: "success",
+          data: createEmptyMatrixConfig({
+            templateId: 0,
+            templateName: "未命名模板",
+            templateCode: "",
+            remark: ""
+          })
+        };
+      }
+
+      return {
+        code: 0,
+        message: "success",
+        data: riskMatrixConfigSeed[templateId] ?? riskMatrixConfigSeed[1]
+      };
+    }
+  },
+  {
+    url: "/risk-matrix-config-save",
+    method: "post",
+    response: ({ body }) => {
+      const templateId = Number(body?.templateId || 0);
+      if (!templateId) {
+        return {
+          code: 10001,
+          message: "缺少模板ID",
+          data: null
+        };
+      }
+
+      riskMatrixConfigSeed[templateId] = {
+        ...riskMatrixConfigSeed[templateId],
+        ...body,
+        templateId
+      };
+
+      const template = riskMatrixTemplateSeed.find(item => item.id === templateId);
+      if (template) {
+        template.templateName = body?.templateName || template.templateName;
+        template.templateCode = body?.templateCode || template.templateCode;
+        template.remark = body?.remark ?? template.remark;
+        template.updateTime = Date.now();
+      }
+
+      return {
+        code: 0,
+        message: "success",
+        data: riskMatrixConfigSeed[templateId]
+      };
+    }
+  },
+  {
+    url: "/risk-assessment-report-list",
+    method: "post",
+    response: ({ body }) => {
+      let list = [...riskAssessmentReportSeed];
+      list = list.filter(item =>
+        item.projectName.includes(body?.projectName ?? "")
+      );
+      list = list.filter(item =>
+        item.projectCode.includes(body?.projectCode ?? "")
+      );
+      list = list.filter(item => item.unitName.includes(body?.unitName ?? ""));
+
+      return {
+        code: 0,
+        message: "success",
+        data: paginateList(list, body)
       };
     }
   },
